@@ -12,11 +12,17 @@
   "dependencies": {
     "@icons-pack/react-simple-icons": "^13.13.0",
     "@tailwindcss/vite": "^4.3.0",
+<<<<<<< HEAD
     "axios": "^1.16.1",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-hot-toast": "^2.6.0",
+=======
+    "lucide-react": "^1.16.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+>>>>>>> 70268fad140b4ac606f76666c42810099aaf6e9e
     "react-router-dom": "^7.15.1",
     "tailwindcss": "^4.3.0"
   },
