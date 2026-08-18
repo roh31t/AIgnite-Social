@@ -1,8 +1,15 @@
 import { Link } from "react-router-dom";
 import { ArrowRightIcon } from "lucide-react";
+<<<<<<< HEAD
+import { useAuth } from "../../context/AuthContext";
+
+export default function Navbar() {
+    const { user } = useAuth();
+=======
 
 export default function Navbar() {
     const { user } = { user: false };
+>>>>>>> 70268fad140b4ac606f76666c42810099aaf6e9e
 
     return (
         <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100">

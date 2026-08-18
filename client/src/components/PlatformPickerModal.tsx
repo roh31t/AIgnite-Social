@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+export default function PlatformPickerModal(props: any) {
+    console.log(props);
+    return null;
+}
+=======
 import { CheckCircleIcon, ExternalLinkIcon, XIcon } from "lucide-react";
 import { PLATFORMS } from "../assets/assets";
 
@@ -79,3 +85,4 @@ const PlatformPickerModal = ({
 };
 
 export default PlatformPickerModal;
+>>>>>>> 70268fad140b4ac606f76666c42810099aaf6e9e
