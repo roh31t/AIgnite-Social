@@ -1,13 +1,16 @@
 import cron from "node-cron";
+import mongoose from "mongoose";
 import { Post } from "../models/Post.js";
 import { Account } from "../models/Account.js";
 import zernio from "../config/zernio.js";
 import { ActivityLog } from "../models/ActivityLog.js";
-import { platform } from "node:os";
 
 export const initScheduler = ()=>{
     cron.schedule("* * * * *", async ()=>{
         try {
+            if (mongoose.connection.readyState !== 1) {
+                return;
+            }
             const now = new Date();
             const postsToPublish = await Post.find({status: "scheduled", scheduledFor: {$lte: now}});
 

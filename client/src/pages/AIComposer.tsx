@@ -1,229 +1,22 @@
-<<<<<<< HEAD
-import React, { useState, useEffect } from 'react';
-import api from '../api/axios';
-import toast from 'react-hot-toast';
-import { SparklesIcon, Loader2Icon, ImagePlusIcon, HistoryIcon, AlignLeftIcon } from 'lucide-react';
-
-interface Generation {
-    _id: string;
-    prompt: string;
-    content: string;
-    mediaUrl?: string;
-    mediaType?: string;
-    tone: string;
-    createdAt: string;
-}
-
-export default function AIComposer() {
-    const [prompt, setPrompt] = useState('');
-    const [tone, setTone] = useState('Professional');
-    const [generateImage, setGenerateImage] = useState(false);
-    
-    const [isLoading, setIsLoading] = useState(false);
-    const [generations, setGenerations] = useState<Generation[]>([]);
-    const [currentGeneration, setCurrentGeneration] = useState<Generation | null>(null);
-
-    const tones = ['Professional', 'Casual', 'Funny', 'Inspirational', 'Informative', 'Sarcastic'];
-
-    const fetchGenerations = async () => {
-        try {
-            const { data } = await api.get('/api/posts/generations');
-            setGenerations(data);
-            if (data.length > 0 && !currentGeneration) {
-                setCurrentGeneration(data[0]);
-            }
-        } catch (error: any) {
-            console.error("Failed to fetch generations", error);
-        }
-    };
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        fetchGenerations();
-    }, []);
-
-    const handleGenerate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!prompt) return toast.error("Please enter a prompt");
-
-        setIsLoading(true);
-        try {
-            const { data } = await api.post('/api/posts/generate', {
-                prompt,
-                tone,
-                generateImage
-            });
-            setCurrentGeneration(data);
-            setGenerations(prev => [data, ...prev]);
-            toast.success("Generation complete!");
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Generation failed");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <div className="p-8 max-w-7xl mx-auto h-full flex flex-col md:flex-row gap-8">
-            {/* Left side: Composer Form */}
-            <div className="w-full md:w-1/2 flex flex-col gap-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <SparklesIcon className="size-6 text-red-500" />
-                        AI Composer
-                    </h1>
-                    <p className="text-slate-500 text-sm mt-1">Generate high-quality social media posts and images in seconds.</p>
-                </div>
-
-                <form onSubmit={handleGenerate} className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col gap-5">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">What do you want to post about?</label>
-                        <textarea 
-                            value={prompt}
-                            onChange={(e) => setPrompt(e.target.value)}
-                            placeholder="e.g., A launch announcement for our new AI feature..."
-                            className="w-full min-h-[120px] rounded-lg border-slate-200 border p-3 focus:ring-2 focus:ring-red-100 focus:border-red-400 outline-none resize-none"
-                            required
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Tone of Voice</label>
-                            <select 
-                                value={tone}
-                                onChange={(e) => setTone(e.target.value)}
-                                className="w-full rounded-lg border-slate-200 border p-2.5 focus:ring-2 focus:ring-red-100 focus:border-red-400 outline-none bg-white"
-                            >
-                                {tones.map(t => (
-                                    <option key={t} value={t}>{t}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="flex flex-col justify-end pb-2">
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                                <div className="relative flex items-center">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={generateImage}
-                                        onChange={(e) => setGenerateImage(e.target.checked)}
-                                        className="sr-only peer" 
-                                    />
-                                    <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-red-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                                </div>
-                                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors flex items-center gap-1.5">
-                                    <ImagePlusIcon className="size-4" />
-                                    Generate Image
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        disabled={isLoading}
-                        className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
-                    >
-                        {isLoading ? (
-                            <><Loader2Icon className="size-5 animate-spin" /> Generating...</>
-                        ) : (
-                            <><SparklesIcon className="size-5" /> Generate Post</>
-                        )}
-                    </button>
-                </form>
-
-                {/* History Section */}
-                <div className="mt-4">
-                    <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-3">
-                        <HistoryIcon className="size-5 text-slate-400" />
-                        Recent Generations
-                    </h3>
-                    <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                        {generations.length === 0 ? (
-                            <div className="text-center py-6 text-sm text-slate-400 border border-dashed border-slate-200 rounded-lg">
-                                No history yet.
-                            </div>
-                        ) : (
-                            generations.map((gen) => (
-                                <div 
-                                    key={gen._id} 
-                                    onClick={() => setCurrentGeneration(gen)}
-                                    className={`p-3 rounded-lg border cursor-pointer transition-all ${currentGeneration?._id === gen._id ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white hover:border-red-200'}`}
-                                >
-                                    <p className="text-sm font-medium text-slate-800 truncate">{gen.prompt}</p>
-                                    <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
-                                        <span className="bg-slate-100 px-2 py-0.5 rounded-full">{gen.tone}</span>
-                                        <span>{new Date(gen.createdAt).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Right side: Results */}
-            <div className="w-full md:w-1/2 flex flex-col h-full">
-                <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex-1 flex flex-col">
-                    <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                        <AlignLeftIcon className="size-5 text-slate-400" />
-                        Result Preview
-                    </h3>
-                    
-                    {isLoading ? (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-3">
-                            <Loader2Icon className="size-10 animate-spin text-red-300" />
-                            <p className="text-sm">Creating your masterpiece...</p>
-                        </div>
-                    ) : currentGeneration ? (
-                        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-5">
-                            {currentGeneration.mediaUrl && (
-                                <div className="w-full h-64 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shrink-0">
-                                    <img src={currentGeneration.mediaUrl} alt="Generated" className="w-full h-full object-cover" />
-                                </div>
-                            )}
-                            <div className="whitespace-pre-wrap text-slate-700 bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm leading-relaxed">
-                                {currentGeneration.content}
-                            </div>
-                            
-                            <div className="mt-auto pt-4 flex gap-3">
-                                <button 
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(currentGeneration.content);
-                                        toast.success("Copied to clipboard!");
-                                    }}
-                                    className="flex-1 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-2 rounded-lg transition-colors text-sm"
-                                >
-                                    Copy Text
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2">
-                            <SparklesIcon className="size-12 text-slate-200" />
-                            <p className="text-sm">Your generated content will appear here.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
-=======
 import { useEffect, useState } from "react";
-import { dummyGenerationData, PLATFORMS } from "../assets/assets";
+import { Link } from "react-router-dom";
+import { PLATFORMS } from "../assets/assets";
 import {
   ArrowRightIcon,
   CalendarIcon,
+  CheckIcon,
   ClockIcon,
+  CopyIcon,
+  EyeIcon,
   HistoryIcon,
   Loader2Icon,
+  SparklesIcon,
   TimerIcon,
   Wand2Icon,
   XIcon,
 } from "lucide-react";
-// import api from "../api/axios";
-// import toast from "react-hot-toast";
+import api from "../api/axios";
+import toast from "react-hot-toast";
 
 const AIComposer = () => {
   const [prompt, setPrompt] = useState("");
@@ -232,62 +25,112 @@ const AIComposer = () => {
   const [loading, setLoading] = useState(false);
   const [generations, setGenerations] = useState<any[]>([]);
 
+  // Post Preview & View on Screen state
+  const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
+
   // Scheduling state
   const [activeScheduler, setActiveScheduler] = useState<any>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [scheduling, setScheduling] = useState(false);
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
 
-  const fetchGenerations = async () => {
-    setGenerations(dummyGenerationData);
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.success("Post copied to clipboard!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const fetchInitData = async () => {
+    try {
+      const [genRes, accRes] = await Promise.all([
+        api.get("/api/posts/generations"),
+        api.get("/api/accounts"),
+      ]);
+      setGenerations(genRes.data);
+      setConnectedPlatforms(
+        accRes.data
+          .filter((a: any) => a.status === "connected")
+          .map((a: any) => a.platform)
+      );
+    } catch (err) {
+      console.error("Failed to load initial composer data:", err);
+    }
   };
 
   useEffect(() => {
-    fetchGenerations();
+    fetchInitData();
   }, []);
 
   const handleGenerate = async () => {
+    if (!prompt) return;
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await api.post("/api/posts/generate", {
+        prompt,
+        tone,
+        generateImage
+      });
+      setGenerations((prev) => [res.data, ...prev]);
+      setPrompt("");
+      toast.success("Content generated successfully!");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to generate content");
+    } finally {
       setLoading(false);
-    }, 2000);
-  };
-  const handleSchedule = async () => {
-    setScheduling(true);
-    setTimeout(() => {
-      setScheduling(false);
-    }, 2000);
+    }
   };
 
-  //   const scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`).toISOString()
-  //   setScheduling(true);
-  //   try {
-  //     await api.post("/api/posts", {
-  //       content: activeScheduler.content,
-  //       mediaUrl: activeScheduler.mediaUrl,
-  //       mediaType: activeScheduler.mediaType,
-  //       platforms: selectedPlatforms,
-  //       scheduledFor,
-  //       status: "scheduled",
-  //     })
-  //       toast.success("AI Post scheduled!");
-  //       setActiveScheduler(null)
-  //       setSelectedPlatforms([]);
-  //       setScheduledDate("");
-  //       setScheduledTime("");
-  //   } catch (error:any) {
-  //     toast.error(error?.response?.data?.message || "Failed to schedule");
-  //   }finally{
-  //     setScheduling(false);
-  //   }
-  //  }
+  const handleSchedule = async () => {
+    if (!activeScheduler || selectedPlatforms.length === 0 || !scheduledDate || !scheduledTime) {
+      toast.error("Please fill all scheduling fields");
+      return;
+    }
+
+    // Verify all selected platforms are connected
+    const missingAccounts = selectedPlatforms.filter((p) => !connectedPlatforms.includes(p));
+    if (missingAccounts.length > 0) {
+      const names = missingAccounts
+        .map((p) => PLATFORMS.find((item) => item.id === p)?.name || p)
+        .join(", ");
+      toast.error(`Please add/connect your ${names} account in the Accounts tab before scheduling.`, {
+        duration: 5000,
+      });
+      return;
+    }
+
+    setScheduling(true);
+    try {
+      const scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
+      await api.post("/api/posts", {
+        content: activeScheduler.content,
+        mediaUrl: activeScheduler.mediaUrl,
+        mediaType: activeScheduler.mediaType,
+        platforms: selectedPlatforms,
+        scheduledFor,
+        status: "scheduled",
+      });
+      toast.success("AI Post scheduled successfully!");
+      setActiveScheduler(null);
+      setSelectedPlatforms([]);
+      setScheduledDate("");
+      setScheduledTime("");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to schedule");
+    } finally {
+      setScheduling(false);
+    }
+  };
 
   const tones = ["Professional", "Creative", "Funny", "Minimalist", "Excited"];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-20 animate-in fade-in duration-700">
-      {/* Input Section */}
+    <>
+      <div className="max-w-4xl mx-auto space-y-12 pb-20 animate-in fade-in duration-700">
+        {/* Input Section */}
       <div className="space-y-6 text-center mt-20">
         <h1 className="text-3xl text-slate-700 tracking-tight">
           What should we create today?
@@ -317,12 +160,12 @@ const AIComposer = () => {
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-2 px-4 py-2 rounded-lg"
+              className="bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer disabled:opacity-70 transition-all"
             >
               {loading ? (
                 <>
                   <Loader2Icon className="size-4 animate-spin" />
-                  <span>Generating...</span>
+                  <span>{generateImage ? "Creating Post & Image..." : "Generating..."}</span>
                 </>
               ) : (
                 <>
@@ -363,24 +206,30 @@ const AIComposer = () => {
           {generations.map((gen) => (
             <div
               key={gen._id}
-              className="group bg-white rounded-2xl border border-slate-100 p-5 hover:border-red-200 transition-all relative overflow-hidden"
+              onClick={() => setSelectedPost(gen)}
+              className="group bg-white rounded-2xl border border-slate-200 p-5 hover:border-red-300 hover:shadow-lg transition-all relative overflow-hidden cursor-pointer flex flex-col justify-between"
             >
-              <div className="flex flex-col h-full space-y-4">
+              <div className="space-y-3 flex-1 flex flex-col">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400 uppercase tracking-widest">
+                  <span className="text-xs text-slate-400 uppercase tracking-widest font-mono">
                     {new Date(gen.createdAt).toLocaleString()}
                   </span>
-                  <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-md">
+                  <span className="text-xs text-red-500 bg-red-50 border border-red-100 px-2.5 py-0.5 rounded-full font-medium">
                     {gen.tone}
                   </span>
                 </div>
 
-                <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed flex-1">
-                  {gen.content}
-                </p>
+                <div className="flex-1">
+                  <p className="text-sm text-slate-700 line-clamp-3 leading-relaxed whitespace-pre-wrap">
+                    {gen.content}
+                  </p>
+                  <span className="inline-flex items-center gap-1 text-[11px] text-red-500 font-medium mt-2 group-hover:underline">
+                    <EyeIcon className="size-3" /> Click to view full post
+                  </span>
+                </div>
 
                 {gen.mediaUrl && (
-                  <div className="rounded-xl overflow-hidden border border-slate-50 bg-slate-50">
+                  <div className="rounded-xl overflow-hidden border border-slate-100 bg-slate-50 mt-2">
                     <img
                       src={gen.mediaUrl}
                       alt="Gen"
@@ -388,15 +237,32 @@ const AIComposer = () => {
                     />
                   </div>
                 )}
+              </div>
 
-                <div className="flex items-center gap-2 pt-2">
-                  <button
-                    onClick={() => setActiveScheduler(gen)}
-                    className="flex-1 bg-slate-100 hover:bg-red-500 hover:text-white text-slate-600 text-xs py-2.5 rounded-lg transition-all"
-                  >
-                    Schedule Post
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 pt-4 mt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPost(gen);
+                  }}
+                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-lg transition-all flex items-center justify-center gap-1"
+                  title="View full post"
+                >
+                  <EyeIcon className="size-3.5" />
+                  View
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveScheduler(gen);
+                  }}
+                  className="flex-1 bg-red-50 hover:bg-red-500 hover:text-white text-red-600 text-xs py-2 rounded-lg transition-all font-medium flex items-center justify-center gap-1.5"
+                >
+                  <CalendarIcon className="size-3.5" />
+                  Schedule Post
+                </button>
               </div>
             </div>
           ))}
@@ -414,6 +280,121 @@ const AIComposer = () => {
           )}
         </div>
       </div>
+      </div>
+
+      {/* Full Generated Post Viewer Modal */}
+      {selectedPost && (
+        <div
+          className="fixed inset-0 min-h-screen z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setSelectedPost(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="size-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center">
+                  <SparklesIcon className="size-4" />
+                </div>
+                <div>
+                  <h3 className="text-slate-900 font-semibold text-base leading-tight">Generated Post</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{new Date(selectedPost.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-red-600 bg-red-50 border border-red-100 px-2.5 py-1 rounded-full">
+                  {selectedPost.tone}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPost(null)}
+                  className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                  title="Close preview"
+                >
+                  <XIcon className="size-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {/* Prompt box */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5">
+                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <Wand2Icon className="size-3 text-red-500" />
+                  Original Prompt
+                </div>
+                <p className="text-xs text-slate-700 leading-relaxed">{selectedPost.prompt}</p>
+              </div>
+
+              {/* Post content */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs relative group">
+                <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Post Content</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(selectedPost.content)}
+                    className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-red-600 px-2.5 py-1 rounded-md bg-slate-100 hover:bg-red-50 transition cursor-pointer"
+                  >
+                    {copied ? <CheckIcon className="size-3.5 text-emerald-600" /> : <CopyIcon className="size-3.5" />}
+                    {copied ? "Copied!" : "Copy Post"}
+                  </button>
+                </div>
+                <p className="text-sm sm:text-base text-slate-800 leading-relaxed whitespace-pre-wrap select-text">
+                  {selectedPost.content}
+                </p>
+              </div>
+
+              {/* Media image if present */}
+              {selectedPost.mediaUrl && (
+                <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                  <img
+                    src={selectedPost.mediaUrl}
+                    alt="Generated Media"
+                    className="w-full max-h-96 object-contain bg-slate-900/5"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 px-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => handleCopy(selectedPost.content)}
+                className="px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-300 rounded-lg transition inline-flex items-center gap-1.5"
+              >
+                {copied ? <CheckIcon className="size-4 text-emerald-600" /> : <CopyIcon className="size-4" />}
+                {copied ? "Copied!" : "Copy Content"}
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPost(null)}
+                  className="px-4 py-2 text-xs sm:text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const postToSchedule = selectedPost;
+                    setSelectedPost(null);
+                    setActiveScheduler(postToSchedule);
+                  }}
+                  className="px-5 py-2 text-xs sm:text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-xs transition flex items-center gap-1.5"
+                >
+                  <CalendarIcon className="size-4" />
+                  Schedule This Post
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Scheduler Modal */}
       {activeScheduler && (
@@ -454,15 +435,26 @@ const AIComposer = () => {
               {/* Options */}
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs text-slate-600 uppercase tracking-widest mb-4">
-                    Select Channels
-                  </label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-xs text-slate-600 uppercase tracking-widest">
+                      Select Channels
+                    </label>
+                    <Link
+                      to="/accounts"
+                      className="text-xs text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Manage Accounts →
+                    </Link>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
                     {PLATFORMS.map((p) => {
                       const active = selectedPlatforms.includes(p.id);
+                      const isConnected = connectedPlatforms.includes(p.id);
                       return (
                         <button
                           key={p.id}
+                          type="button"
+                          title={isConnected ? `${p.name} (Connected)` : `${p.name} (Not Connected)`}
                           onClick={() =>
                             setSelectedPlatforms((prev) =>
                               prev.includes(p.id)
@@ -470,13 +462,32 @@ const AIComposer = () => {
                                 : [...prev, p.id],
                             )
                           }
-                          className={`p-2.5 rounded-md border text-xs ${active ? "bg-red-500/80 text-white" : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"}`}
+                          className={`relative p-2.5 rounded-lg border text-xs transition cursor-pointer ${active ? "bg-red-500 text-white border-red-500 shadow-sm" : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"}`}
                         >
                           <p.icon className="size-4.5" />
+                          <span
+                            className={`absolute -top-1 -right-1 size-2 rounded-full border border-white ${isConnected ? "bg-emerald-500" : "bg-slate-300"}`}
+                          />
                         </button>
                       );
                     })}
                   </div>
+                  {selectedPlatforms.some((p) => !connectedPlatforms.includes(p)) && (
+                    <div className="mt-2.5 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center justify-between">
+                      <span>
+                        Account not connected for:{" "}
+                        <strong>
+                          {selectedPlatforms
+                            .filter((p) => !connectedPlatforms.includes(p))
+                            .map((p) => PLATFORMS.find((item) => item.id === p)?.name || p)
+                            .join(", ")}
+                        </strong>
+                      </span>
+                      <Link to="/accounts" className="text-red-600 font-semibold underline shrink-0 ml-2">
+                        Connect
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -515,9 +526,8 @@ const AIComposer = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
 export default AIComposer;
->>>>>>> 70268fad140b4ac606f76666c42810099aaf6e9e

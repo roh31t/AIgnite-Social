@@ -13,8 +13,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@google/genai": "^2.6.0",
-    "@zernio/node": "^0.2.157",
+    "@google/genai": "^2.27.0",
+    "@zernio/node": "^0.2.991",
     "axios": "^1.16.1",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",

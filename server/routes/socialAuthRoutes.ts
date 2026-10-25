@@ -1,6 +1,6 @@
 import express from "express";
 import { generateAuthUrl, syncAccounts } from "../controllers/socialAuthController.js";
-import { protect } from "../middlewares/authMiddlewware.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const socialAuthRouter = express.Router();
 

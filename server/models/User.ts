@@ -4,7 +4,9 @@ const userSchema = new mongoose.Schema({
      email: {type: String, required: true, unique: true},
      password: {type: String, required: true},
      name: {type: String, required: true},
-     zernioProfileId: { type: String }
+     zernioProfileId: { type: String },
+     resetPasswordOtp: { type: String },
+     resetPasswordOtpExpires: { type: Date }
 }, {timestamps: true});
 
 export const User = mongoose.model('User', userSchema)
